@@ -1,67 +1,97 @@
-const months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+let yearsElement, monthsElement, daysElement, dateInputElement, errorMessageElement;
 
-const ageCalculate = () => {
-    let today = new Date();
-    let inputDate = new Date(document.getElementById("date-input").value);
-    let birthMonth, birthYear, birthDate;
+const initializeElements = () => {
+    yearsElement = document.getElementById('years');
+    monthsElement = document.getElementById('months');
+    daysElement = document.getElementById('days');
+    dateInputElement = document.getElementById("date-input");
+    errorMessageElement = document.getElementById('error-message');
+}
 
-    let birthDetails = {
-        date: inputDate.getDate(),
-        month: inputDate.getMonth() + 1,
-        year: inputDate.getFullYear()
+// Ensure initializeElements is called when the document is fully loaded
+document.addEventListener('DOMContentLoaded', initializeElements);
+
+const getTodayWithoutTime = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+}
+
+const getDateWithoutTime = (date) => {
+    date.setHours(0, 0, 0, 0)
+    return date;
+}
+
+const validateDateInput = (inputDate) => {
+    const today = getTodayWithoutTime();
+    let validationResult = { isValid: true, errorMessage: '' };
+
+    if (isNaN(inputDate.getTime())) {
+        validationResult = { isValid: false, errorMessage: "Invalid date. Please enter a valid date." };
+    } else if (getDateWithoutTime(inputDate) > today) {
+        validationResult = { isValid: false, errorMessage: "Not born yet." };
     }
 
-    let currentYear = today.getFullYear();
-    let currentMonth = today.getMonth() + 1;
-    let currentDate = today.getDate();
+    return validationResult;
+}
 
-    leapChecker(currentYear);
 
-    if (
-        birthDetails.year > currentYear ||
-        (birthDetails.year == currentYear && birthDetails.month > currentMonth) ||
-        (birthDetails.year == currentYear && birthDetails.month == currentMonth && birthDetails.date > currentDate)
-    ) {
-        alert("Not Born Yet");
-        displayResult("-","-","-");
+const calculateAgeFromDate = (birthDate) => {
+    const today = getTodayWithoutTime();
+    birthDate = getDateWithoutTime(birthDate);  // Remove time components for accurate comparison
+    const age = { years: 0, months: 0, days: 0 };
+
+    // Calculate years
+    age.years = today.getFullYear() - birthDate.getFullYear();
+    if (today.getMonth() < birthDate.getMonth() || (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())) {
+        age.years--;
+    }
+
+    // Calculate months
+    age.months = today.getMonth() - birthDate.getMonth();
+    if (today.getDate() < birthDate.getDate()) {
+        age.months--;
+    }
+    if (age.months < 0) {
+        age.months += 12;
+    }
+
+    // Calculate days
+    let daysInBirthMonth = new Date(birthDate.getFullYear(), birthDate.getMonth() + 1, 0).getDate();
+    if (today.getDate() < birthDate.getDate()) {
+        age.days = daysInBirthMonth - birthDate.getDate() + today.getDate();
+    } else {
+        age.days = today.getDate() - birthDate.getDate();
+    }
+
+    return age;
+}
+
+const calculateAge = () => {
+    // Clear previous error message
+    displayError("");
+
+    // Read the user's date input
+    const birthDate = new Date(dateInputElement.value);
+
+    const validation = validateDateInput(birthDate);
+    if (!validation.isValid) {
+        displayError(validation.errorMessage);
+        displayResult('-', '-', '-');
         return;
     }
 
-    birthYear = currentYear - birthDetails.year;
+    const { days, months, years } = calculateAgeFromDate(birthDate);
 
-    if (currentMonth >= birthDetails.month) {
-        birthMonth = currentMonth - birthDetails.month;
-    } else {
-        birthYear--;
-        birthMonth = 12 + currentMonth - birthDetails.month;
-    }
-
-    if (currentDate >= birthDetails.date) {
-        birthDate = currentDate - birthDetails.date;
-    } else {
-        birthMonth--;
-        let days = months[currentMonth - 2];
-        birthDate = days + currentDate - birthDetails.date;
-        if (birthMonth < 0) {
-            birthMonth = 11;
-            birthYear--;
-        }
-    }
-
-    displayResult(birthDate, birthMonth, birthYear);
-
+    displayResult(days, months, years);
 }
 
-const displayResult = (bDate, bMonth, bYear) => {
-    document.getElementById('years').textContent = bYear;
-    document.getElementById('months').textContent = bMonth;
-    document.getElementById('days').textContent = bDate;
+const displayError = (message = '') => {
+    errorMessageElement.textContent = message;
 }
 
-const leapChecker = (year) => {
-    if (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) {
-        months[1] = 29;
-    } else {
-        months[1] = 28;
-    }
+const displayResult = (days, months, years) => {
+    yearsElement.textContent = years;
+    monthsElement.textContent = months;
+    daysElement.textContent = days;
 }

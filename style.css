@@ -72,6 +72,15 @@ button {
     box-shadow: 0 15px 20px rgba(0, 0, 0, 0.3);
 }
 
+.error-wrapper {
+    text-align: center;
+}
+
+#error-message {
+    color: red;
+    font-size: 1rem;
+}
+
 span {
     font-size: 30px;
     font-weight: 500;
